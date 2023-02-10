@@ -1,7 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RequestReplyCommon;
+using System.Text;
 
 Console.WriteLine("Hello, World!");
 ConnectionFactory factory = new ConnectionFactory();
@@ -18,7 +20,7 @@ IModel channel = conn.CreateModel();
 var consumer = new EventingBasicConsumer(channel);
 consumer.Received += (sender, e) =>
 {
-    string requestData = System.Text.Encoding.UTF8.GetString(e.Body);
+    string requestData = System.Text.Encoding.UTF8.GetString(e.Body.Span);
     CalculationRequest request = JsonConvert.DeserializeObject<CalculationRequest>(requestData);
     Console.WriteLine("Request received:" + request.ToString());
 
@@ -37,7 +39,7 @@ consumer.Received += (sender, e) =>
 
     var basicProperties = channel.CreateBasicProperties();
     basicProperties.Headers = new Dictionary<string, object>();
-    basicProperties.Headers.Add(Constants.RequestIdHeaderKey, e.BasicProperties.Headers[Constants.RequestIdHeaderKey]);
+    basicProperties.Headers.Add(RequestReplyCommon.Constants.RequestIdHeaderKey, e.BasicProperties.Headers[RequestReplyCommon.Constants.RequestIdHeaderKey]);
 
     channel.BasicPublish(
     "",
